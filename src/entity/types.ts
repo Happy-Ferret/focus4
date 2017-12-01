@@ -110,7 +110,7 @@ export interface Entity {
 export interface EntityField<T, D extends DomainNoDefault = {}> {
 
     /** Métadonnées. */
-    readonly $entity: FieldEntry<D["inputProps"], D["displayProps"], D["labelProps"]>;
+    readonly $field: FieldEntry<D["inputProps"], D["displayProps"], D["labelProps"]>;
 
     /** Valeur. */
     value: T | undefined;

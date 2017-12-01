@@ -10,8 +10,8 @@ import {EntityField} from "../entity";
 import Field, {FieldProps, RefValues} from "./field";
 import {BaseDisplayProps, BaseInputProps, BaseLabelProps, Domain} from "./types";
 
-/** $entity par défaut dans le cas où on n'a pas de métadonnées particulière pour afficher un champ. */
-export const $entity = {
+/** $field par défaut dans le cas où on n'a pas de métadonnées particulière pour afficher un champ. */
+export const $field = {
     domain: {},
     type: "field" as "field",
     isRequired: false,
@@ -63,7 +63,7 @@ export function fieldFor<T, ICDomainProps extends BaseInputProps = InputProps, D
         // On renseigne `onChange` si on est dans un field avec le comportement attendu la plupart du temps.
         options.onChange = options.onChange || action(((value: T) => field.value = value)) as any;
     } else {
-        trueField = {$entity, value: field};
+        trueField = {$field, value: field};
     }
 
     // Si on ne pose pas de ref, on considère qu'on n'a pas de formulaire et donc qu'on attend un comportement par défaut un peu différent.
@@ -121,7 +121,7 @@ export function buildFieldProps<T, ICDomainProps extends BaseInputProps = InputP
     field: EntityField<T, Domain<ICDomainProps, DCDomainProps, LCDomainProps>>,
     options: Partial<FieldProps<T, ICProps, DCProps, LCProps, {}, string, string>>
 ) {
-    const {value, $entity: {domain = {}, translationKey, isRequired}} = field;
+    const {value, $field: {domain = {}, translationKey, isRequired}} = field;
     const {hasLabel = true, innerRef, inputProps = {}, displayProps = {}, labelProps = {},  ...otherOptions} = options;
     const {
         inputProps: inputPropsD = {},
@@ -156,5 +156,5 @@ export function buildFieldProps<T, ICDomainProps extends BaseInputProps = InputP
  * @param field Le champ ou la valeur.
  */
 export function isField<T>(field: EntityField<T> | T): field is EntityField<T> {
-    return !!(field && (field as EntityField<T>).$entity);
+    return !!(field && (field as EntityField<T>).$field);
 }
