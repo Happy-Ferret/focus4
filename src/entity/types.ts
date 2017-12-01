@@ -83,8 +83,8 @@ export interface FieldEntry<ICProps = {}, DCProps = {}, LCProps = {}> {
     /** Nom de l'entrée. */
     readonly name: string;
 
-    /** Identifiant unique de l'entrée. */
-    readonly translationKey: string;
+    /** Libellé du champ, normalement sous forme de clé i18n. */
+    readonly label: string;
 }
 
 /** Métadonnées d'une entrée de type "object" pour une entité. */
