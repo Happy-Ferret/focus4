@@ -1,43 +1,36 @@
 import i18next from "i18next";
-import {find, result} from "lodash";
 import {action} from "mobx";
 import * as React from "react";
-import {InputProps} from "react-toolbox/lib/input";
+import {Input, InputProps} from "react-toolbox/lib/input";
 
-import {DisplayProps, Select, SelectProps} from "../components";
+import {Display, DisplayProps, Select, SelectProps} from "../components";
+import {ReactComponent} from "../config";
 import {EntityField} from "../entity";
 
-import Field, {FieldProps, RefValues} from "./field";
+// @ts-ignore
+import Field, {Field as FieldType, FieldOptions, FieldProps, ReferenceOptions, RefValues} from "./field";
 import {BaseDisplayProps, BaseInputProps, BaseLabelProps, Domain} from "./types";
+// @ts-ignore
+import * as validation from "./validation";
 
-/** $field par défaut dans le cas où on n'a pas de métadonnées particulière pour afficher un champ. */
-export const $field = {
-    domain: {},
-    type: "field" as "field",
-    isRequired: false,
-    name: "",
-    translationKey: ""
-};
+// @ts-ignore
+import * as styles from "./__style__/field.css";
 
 /**
  * Crée un champ standard en lecture seule.
  * @param field La définition de champ.
  * @param options Les options du champ.
  */
-export function displayFor<DCProps extends BaseDisplayProps = DisplayProps, LCProps extends BaseLabelProps = BaseLabelProps>(
-    field: string | number | boolean,
-    options?: Partial<FieldProps<string | number | boolean, {}, DCProps, LCProps, {}, string, string>>
-): JSX.Element;
-export function displayFor<T, DCDomainProps extends BaseDisplayProps = DisplayProps, LCDomainProps extends BaseLabelProps = BaseLabelProps, DCProps = DCDomainProps, LCProps = LCDomainProps>(
-    field: EntityField<T, Domain<{}, DCDomainProps, LCDomainProps>>,
-    options?: Partial<FieldProps<T, {}, DCProps, LCProps, {}, string, string>>
-): JSX.Element;
-export function displayFor<T, DCDomainProps extends BaseDisplayProps = DisplayProps, LCDomainProps extends BaseLabelProps = BaseLabelProps, DCProps = DCDomainProps, LCProps = LCDomainProps>(
-    field: EntityField<T, Domain<{}, DCDomainProps, LCDomainProps>> | T,
-    options: Partial<FieldProps<T, {}, DCProps, LCProps, {}, string, string>> = {}
+export function displayFor<
+    T,
+    DCProps extends BaseDisplayProps = DisplayProps,
+    LCProps extends BaseLabelProps = BaseLabelProps
+>(
+    field: EntityField<T, Domain<{}, DCProps, LCProps>>,
+    options: Partial<FieldOptions<T, {}, DCProps, LCProps, {}, string, string>> = {}
 ) {
     options.isEdit = false;
-    return fieldFor(field as any, options);
+    return fieldFor(field, options);
 }
 
 /**
@@ -45,26 +38,16 @@ export function displayFor<T, DCDomainProps extends BaseDisplayProps = DisplayPr
  * @param field La définition de champ.
  * @param options Les options du champ.
  */
-export function fieldFor<ICProps extends BaseInputProps = InputProps, DCProps extends BaseDisplayProps = DisplayProps, LCProps extends BaseLabelProps = BaseLabelProps>(
-    field: string | number | boolean,
-    options?: Partial<FieldProps<string | number | boolean, ICProps, DCProps, LCProps, {}, string, string>>
-): JSX.Element;
-export function fieldFor<T, ICDomainProps extends BaseInputProps = InputProps, DCDomainProps extends BaseDisplayProps = DisplayProps, LCDomainProps extends BaseLabelProps = BaseLabelProps, ICProps = ICDomainProps, DCProps = DCDomainProps, LCProps = LCDomainProps>(
-    field: EntityField<T, Domain<ICDomainProps, DCDomainProps, LCDomainProps>>,
-    options?: Partial<FieldProps<T, ICProps, DCProps, LCProps, {}, string, string>>
-): JSX.Element;
-export function fieldFor<T, ICDomainProps extends BaseInputProps = InputProps, DCDomainProps extends BaseDisplayProps = DisplayProps, LCDomainProps extends BaseLabelProps = BaseLabelProps, ICProps = ICDomainProps, DCProps = DCDomainProps, LCProps = LCDomainProps>(
-    field: EntityField<T, Domain<ICDomainProps, DCDomainProps, LCDomainProps>> | T,
-    options: Partial<FieldProps<T, ICProps, DCProps, LCProps, {}, string, string>> = {}
+export function fieldFor<
+    T,
+    ICProps extends BaseInputProps = InputProps,
+    DCProps extends BaseDisplayProps = DisplayProps,
+    LCProps extends BaseLabelProps = BaseLabelProps
+>(
+    field: EntityField<T, Domain<ICProps, DCProps, LCProps>>,
+    options: Partial<FieldOptions<T, ICProps, DCProps, LCProps, {}, string, string>> = {}
 ) {
-    let trueField;
-    if (isField(field)) {
-        trueField = field;
-        // On renseigne `onChange` si on est dans un field avec le comportement attendu la plupart du temps.
-        options.onChange = options.onChange || action(((value: T) => field.value = value)) as any;
-    } else {
-        trueField = {$field, value: field};
-    }
+    options.onChange = options.onChange || action(((value: T) => field.value = value));
 
     // Si on ne pose pas de ref, on considère qu'on n'a pas de formulaire et donc qu'on attend un comportement par défaut un peu différent.
     if (!options.innerRef) {
@@ -76,7 +59,7 @@ export function fieldFor<T, ICDomainProps extends BaseInputProps = InputProps, D
         }
     }
 
-    const props = buildFieldProps(trueField, options);
+    const props = buildFieldProps(field, options);
     return <Field {...props} />;
 }
 
@@ -86,13 +69,23 @@ export function fieldFor<T, ICDomainProps extends BaseInputProps = InputProps, D
  * @param values La liste de référence.
  * @param options Les options du champ.
  */
-export function selectFor<T, DCDomainProps extends BaseDisplayProps = DisplayProps, LCDomainProps extends BaseLabelProps = BaseLabelProps, ICProps extends BaseInputProps = Partial<SelectProps>, DCProps = DCDomainProps, LCProps = LCDomainProps, R extends RefValues<T, ValueKey, LabelKey> = any, ValueKey extends string = "code", LabelKey extends string = "label">(
-    field: EntityField<T, Domain<{}, DCDomainProps, LCDomainProps>>,
+export function selectFor<
+    T,
+    ICProps extends BaseInputProps = Partial<SelectProps>,
+    DCProps extends BaseDisplayProps = DisplayProps,
+    LCProps extends BaseLabelProps = BaseLabelProps,
+    R extends RefValues<T, ValueKey, LabelKey> = any,
+    ValueKey extends string = "code",
+    LabelKey extends string = "label"
+>(
+    field: EntityField<T, Domain<{}, DCProps, LCProps>>,
     values: R[],
-    options: Partial<FieldProps<T, ICProps, DCProps, LCProps, R, ValueKey, LabelKey>> = {}
+    options: Partial<FieldOptions<T, ICProps, DCProps, LCProps, R, ValueKey, LabelKey>> & {
+        SelectComponent?: ReactComponent<ICProps>
+    } = {}
 ) {
-    options.InputComponent = options.InputComponent as any || Select;
-    options.values = values.slice(); // On s'assure que la liste de référence passée au composant ne soit pas observable.
+    field.$field.domain.InputComponent = options.SelectComponent || Select;
+    options.values = values;
     return fieldFor(field, options);
 }
 
@@ -101,60 +94,72 @@ export function selectFor<T, DCDomainProps extends BaseDisplayProps = DisplayPro
  * @param field La définition de champ.
  * @param options Les options du champ.
  */
-export function stringFor<T, R extends RefValues<T, ValueKey, LabelKey>, ValueKey extends string = "code", LabelKey extends string = "label">(
+export function stringFor<
+    T,
+    R extends RefValues<T, ValueKey, LabelKey>,
+    ValueKey extends string = "code",
+    LabelKey extends string = "label"
+>(
     field: EntityField<T>,
-    options: Partial<FieldProps<T, {}, {}, {}, R, ValueKey, LabelKey>> = {}
+    options: ReferenceOptions<T, R, ValueKey, LabelKey> = {}
 ) {
-    const {displayFormatter, valueKey = "code", labelKey = "label", values, value} = buildFieldProps(field, options);
-    const processedValue = values ? result(find(values, {[valueKey]: value}), labelKey) : value;
-    return displayFormatter!(processedValue);
+    const {displayFormatter, valueKey = "code", labelKey = "label", values = [], value} = buildFieldProps(field, options);
+    const found = values.find(val => (val as any)[valueKey] === value);
+    const processedValue = found && (found as any)[labelKey] || value;
+    return displayFormatter(processedValue);
 }
 
 /**
  * Construit les props à passer au composant Field.
  *
- * Les props seront récupérées depuis, dans l'ordre, (1) le domaine, (2) l'entité, et (3) les options.
  * @param field La définition du champ.
  * @param options Les options du champ.
  */
-export function buildFieldProps<T, ICDomainProps extends BaseInputProps = InputProps, DCDomainProps extends BaseDisplayProps = DisplayProps, LCDomainProps extends BaseLabelProps = BaseLabelProps, ICProps = ICDomainProps, DCProps = DCDomainProps, LCProps = LCDomainProps>(
-    field: EntityField<T, Domain<ICDomainProps, DCDomainProps, LCDomainProps>>,
-    options: Partial<FieldProps<T, ICProps, DCProps, LCProps, {}, string, string>>
+export function buildFieldProps<
+    T,
+    ICProps extends BaseInputProps = InputProps,
+    DCProps extends BaseDisplayProps = DisplayProps,
+    LCProps extends BaseLabelProps = BaseLabelProps,
+    R extends RefValues<T, ValueKey, LabelKey> = any,
+    ValueKey extends string = "code",
+    LabelKey extends string = "label"
+>(
+    field: EntityField<T, Domain<ICProps, DCProps, LCProps>>,
+    options: Partial<FieldOptions<T, ICProps, DCProps, LCProps, R, ValueKey, LabelKey>> = {}
 ) {
-    const {value, $field: {domain = {}, translationKey, isRequired}} = field;
-    const {hasLabel = true, innerRef, inputProps = {}, displayProps = {}, labelProps = {},  ...otherOptions} = options;
+    const {value, $field: {name = "", domain = {}, translationKey: label = "", isRequired = false}} = field;
+    const {hasLabel = true, ...otherOptions} = options;
     const {
-        inputProps: inputPropsD = {},
-        displayProps: displayPropsD = {},
-        labelProps: labelPropsD = {},
-        displayFormatter = (t: string) => i18next.t(t),
-        inputFormatter = ((x: any) => x),
-        unformatter = ((x: any) => x),
-        ...otherDomain
+        className,
+        DisplayComponent = Display,
+        displayFormatter = (t: T) => i18next.t(t as any),
+        displayProps,
+        InputComponent = Input,
+        inputFormatter = ((x: T) => x),
+        inputProps,
+        LabelComponent = (() => <label htmlFor={name}>{label && i18next.t(label) || ""}</label>),
+        labelProps,
+        unformatter = ((x: string) => x),
+        validator
     } = domain;
 
     return {
-        ...otherDomain,
+        className,
+        DisplayComponent,
         displayFormatter,
-        inputFormatter,
+        displayProps,
         hasLabel,
-        innerRef,
+        InputComponent,
+        inputFormatter,
+        inputProps,
         isRequired,
-        label: translationKey,
+        label,
+        LabelComponent,
+        labelProps,
         name,
-        value,
         unformatter,
-        inputProps: {...inputPropsD as {}, ...inputProps as {}},
-        displayProps: {...displayPropsD as {}, ...displayProps as {}},
-        labelProps: {...labelPropsD as {}, ...labelPropsD as {}},
+        validator,
+        value,
         ...otherOptions
-    } as FieldProps<T, ICProps, DCProps, LCProps, {}, string, string>;
-}
-
-/**
- * Vérifie que l'entrée est un champ.
- * @param field Le champ ou la valeur.
- */
-export function isField<T>(field: EntityField<T> | T): field is EntityField<T> {
-    return !!(field && (field as EntityField<T>).$field);
+    } as FieldProps<T, ICProps, DCProps, LCProps, R, ValueKey, LabelKey>;
 }

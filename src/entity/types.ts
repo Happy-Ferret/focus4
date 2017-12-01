@@ -7,7 +7,14 @@ import {Validator} from "./validation";
 
 /** Props de base pour un composant d'affichage. */
 export interface BaseDisplayProps {
+    formatter?: (x: any) => string;
+    keyResolver?: (x: any) => Promise<string>;
+    labelKey?: string;
+    name?: string;
+    onChange?: Function;
     value?: any;
+    valueKey?: string;
+    values?: any[];
 }
 
 /** Props de base pour un composant d'input. */
