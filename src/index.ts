@@ -9,7 +9,7 @@ export {observer} from "mobx-react";
 import * as React from "react"; export {React};
 
 export {Panel, Popin} from "./components";
-export {AutoForm, displayFor, fieldFor, selectFor, stringFor} from "./entity";
+export {AutoForm, displayFor, fieldFor, makeFormNode, selectFor, stringFor} from "./entity";
 export {injectByName, injectByPropName} from "./ioc";
 export {listFor, tableFor, timelineFor} from "./list";
 export {messageStore} from "./message";

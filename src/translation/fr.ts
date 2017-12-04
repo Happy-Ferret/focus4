@@ -71,6 +71,7 @@ export const fr = {
         number: "Le nombre saisi est invalide",
         pourcentage: "Le pourcentage saisi est invalide",
         regex: "La valeur saisie est invalide",
-        required: "Le champ est obligatoire"
+        required: "Le champ est obligatoire",
+        string: "La texte saisi est invalide"
     }
 };
